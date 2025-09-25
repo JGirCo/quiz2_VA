@@ -72,7 +72,7 @@ class readVideo:
             processing_time = time.time() - start_time
             sleep_time = delay_between_frames - processing_time
             if sleep_time > 0:
-                time.sleep(sleep_time)
+                time.sleep(sleep_time * 2)
 
     @property
     def frame(self) -> MatLike:
