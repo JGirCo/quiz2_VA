@@ -9,8 +9,8 @@
 - [/] Segmentar letras
   - [x] Preprocesamiénto de imágenes
   - [x] Filtrado de imágenes
-  - [/] Binarización
-  - [ ] Detección de contornos
+  - [x] Binarización
+  - [/] Detección de contornos
   - [ ] Filtrado de contornos
   - [ ] Segmentación de letras
 - [?] Integrar machine learning

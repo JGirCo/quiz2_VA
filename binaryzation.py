@@ -5,9 +5,13 @@ from getVideo import readVideo
 
 def binary(image, method=0, Umin=0, Umax=255) -> np.ndarray:
     if method == 0:
-        ret, imgBinary = cv2.threshold(image, Umin, Umax, cv2.THRESH_BINARY)
-    else:
+        _, imgBinary = cv2.threshold(image, Umin, Umax, cv2.THRESH_BINARY)
+    elif method == 1:
         imgBinary = cv2.inRange(image, Umin, Umax)
+    else:
+        imgBinary = cv2.adaptiveThreshold(
+            image, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, Umin, Umax
+        )
     return imgBinary.astype(np.uint8)
 
 
@@ -38,8 +42,10 @@ def filter_frame(frame_bin):
 
 def create_trackbar():
     cv2.namedWindow("Placa")
-    cv2.createTrackbar("min", "Placa", 25, 255, lambda x: None)
-    cv2.createTrackbar("max", "Placa", 80, 255, lambda x: None)
+    cv2.createTrackbar("min", "Placa", 0, 255, lambda x: None)
+    cv2.createTrackbar("max", "Placa", 90, 255, lambda x: None)
+    cv2.createTrackbar("block", "Placa", 4, 10, lambda x: None)
+    cv2.createTrackbar("C", "Placa", 1, 10, lambda x: None)
 
 
 def normalize_frame(frame: np.ndarray, desired_light: int = 90) -> np.ndarray:
@@ -63,12 +69,21 @@ def main() -> None:
         if frame is not None:
             min = cv2.getTrackbarPos("min", "Placa")
             max = cv2.getTrackbarPos("max", "Placa")
+            block = cv2.getTrackbarPos("block", "Placa") * 2 + 1
+            C = cv2.getTrackbarPos("C", "Placa")
             # contours = frame_contours(frame, 20, 255)
             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             frame_normalized = normalize_frame(frame_gray, 95)
             frame_bin = binary(frame_normalized, method=1, Umin=min, Umax=max)
-            # for cnt in contours: x, y, w, h = cv2.boundingRect(cnt) cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 5)
-            cv2.imshow("Placa", cv2.resize(frame_bin, (320, 200)))
+            frame_adaptive = binary(frame_gray, method=2, Umin=19, Umax=C)
+            frame_and = cv2.bitwise_and(frame_bin, cv2.bitwise_not(frame_adaptive))
+            contours, _ = cv2.findContours(
+                frame_and, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
+            )
+            for cnt in contours:
+                x, y, w, h = cv2.boundingRect(cnt)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 5)
+            cv2.imshow("Placa", cv2.resize(frame, (320, 200)))
             out.write(cv2.resize(frame_bin, (320, 200)))
         if cv2.waitKey(10) & 0xFF == ord("q"):
             break
