@@ -6,8 +6,8 @@ import numpy as np
 model = YOLO("./bestPlateCar.pt")
 
 # Ruta del video de entrada y de salida
-video_path = "./carVideos/1.mp4"
-output_video_path = "predicted_video.mp4"
+video_path = "./carVideos/full_video.mov"
+output_video_path = "predicted_video_full.mp4"
 
 # Abrir el video
 cap = cv2.VideoCapture(video_path)
@@ -49,6 +49,7 @@ while cap.isOpened():
             cv2.rectangle(
                 frame, (x1 - 5, y1 - 3), (x2 + 3, y2 + 3), (0, 255, 0), 2
             )  # Color verde y grosor 2
+            cv2.imshow("img roi", cv2.resize(frame, (320, 200)))
             label = f"Class {class_id} ({confidence:.2f})"
 
             # Poner la etiqueta con el ID de la clase y la confianza
@@ -66,8 +67,9 @@ while cap.isOpened():
             print(f"{imgRoi.shape=}")
             if imgRoi.shape[0] < 20 or imgRoi.shape[1] < 60:
                 continue
-            # cv2.imshow("img roi", cv2.resize(imgRoi, (320, 200)))
             out.write(cv2.resize(imgRoi, (320, 200)))
+            if cv2.waitKey(10) & 0xFF == ord("q"):
+                continue
             # cv2.imwrite("placa.png", imgRoi)
 
 # Liberar los recursos

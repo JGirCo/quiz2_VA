@@ -57,8 +57,8 @@ def normalize_frame(frame: np.ndarray, desired_light: int = 90) -> np.ndarray:
 def main() -> None:
     output_video_path = "binary_video.mp4"
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec para el video de salida
-    out = cv2.VideoWriter(output_video_path, fourcc, 30, (320, 200), isColor=False)
-    video_source = "./predicted_video.mp4"
+    out = cv2.VideoWriter(output_video_path, fourcc, 30, (320, 200))
+    video_source = "./predicted_video_full.mp4"
     video = readVideo(src=video_source)
     video.start()
     frame = cv2.imread("./placa.png")
@@ -80,11 +80,26 @@ def main() -> None:
             contours, _ = cv2.findContours(
                 frame_and, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
             )
-            for cnt in contours:
+            sizeable_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 1000]
+            valid_contours = []
+            frame_contours = cv2.cvtColor(frame_and, cv2.COLOR_GRAY2BGR)
+            for cnt in sizeable_contours:
                 x, y, w, h = cv2.boundingRect(cnt)
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 5)
-            cv2.imshow("Placa", cv2.resize(frame, (320, 200)))
-            out.write(cv2.resize(frame_bin, (320, 200)))
+                whRatio = h / w
+                if not (2 < whRatio < 6):
+                    continue
+                valid_contours.append(cnt)
+                cv2.rectangle(frame_contours, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cv2.putText(
+                    frame_contours,
+                    str(whRatio),
+                    (x, y - 4),
+                    color=(0, 255, 0),
+                    fontFace=1,
+                    fontScale=0.75,
+                )
+            cv2.imshow("Placa", cv2.resize(frame_contours, (320, 200)))
+            out.write(cv2.resize(frame_contours, (320, 200)))
         if cv2.waitKey(10) & 0xFF == ord("q"):
             break
     video.stop()
